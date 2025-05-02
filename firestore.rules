@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /bookings/{bookingId} {
+      // Allow read access to all authenticated users
+      allow read: if request.auth != null;
+      
+      // Allow users to create bookings
+      allow create: if request.auth != null;
+      
+      // Allow users to delete their own bookings or admin to delete any
+      allow delete: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || 
+         request.auth.token.email == 'nanderson815@gmail.com');
+    }
+    
+    match /blockedDates/{blockedId} {
+      // Allow read access to all authenticated users
+      allow read: if request.auth != null;
+      
+      // Only admin can create or delete blocked dates
+      allow create, delete: if request.auth != null && 
+        request.auth.token.email == 'nanderson815@gmail.com';
+    }
+  }
+}
