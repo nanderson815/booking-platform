@@ -8,6 +8,7 @@ import { toast } from "react-toastify";
 import { collection, addDoc, getDocs, deleteDoc, doc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { BlockedDateRange } from "@/types";
+import { ConfirmModal } from "../ui/ConfirmModal";
 
 interface BlockDatesFormProps {
   onBlockComplete?: () => void;
@@ -20,6 +21,8 @@ export function BlockDatesForm({ onBlockComplete }: BlockDatesFormProps) {
   const [blockReason, setBlockReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [blockedRanges, setBlockedRanges] = useState<BlockedDateRange[]>([]);
+  const [unblockModalOpen, setUnblockModalOpen] = useState(false);
+  const [blockToDelete, setBlockToDelete] = useState<string | null>(null);
 
   const fetchBlockedDates = useCallback(async () => {
     try {
@@ -79,17 +82,25 @@ export function BlockDatesForm({ onBlockComplete }: BlockDatesFormProps) {
     }
   };
 
-  const handleDeleteBlock = async (blockId: string) => {
-    if (!confirm('Are you sure you want to unblock these dates?')) return;
+  const handleUnblockClick = (blockId: string) => {
+    setBlockToDelete(blockId);
+    setUnblockModalOpen(true);
+  };
+
+  const handleDeleteBlock = async () => {
+    if (!blockToDelete) return;
     
     try {
-      await deleteDoc(doc(db, 'blockedDates', blockId));
+      await deleteDoc(doc(db, 'blockedDates', blockToDelete));
       toast.success('Dates unblocked successfully');
       fetchBlockedDates();
       onBlockComplete?.(); // Trigger calendar refresh
     } catch (error) {
       console.error('Error deleting blocked dates:', error);
       toast.error('Failed to unblock dates');
+    } finally {
+      setUnblockModalOpen(false);
+      setBlockToDelete(null);
     }
   };
 
@@ -119,7 +130,7 @@ export function BlockDatesForm({ onBlockComplete }: BlockDatesFormProps) {
                   </div>
                 </div>
                 <button
-                  onClick={() => handleDeleteBlock(range.id)}
+                  onClick={() => handleUnblockClick(range.id)}
                   className="text-red-600 hover:text-red-800"
                   title="Unblock these dates"
                 >
@@ -190,6 +201,17 @@ export function BlockDatesForm({ onBlockComplete }: BlockDatesFormProps) {
           {loading ? "Blocking dates..." : "Block these dates"}
         </button>
       </form>
+      
+      <ConfirmModal
+        isOpen={unblockModalOpen}
+        onClose={() => setUnblockModalOpen(false)}
+        onConfirm={handleDeleteBlock}
+        title="Unblock dates"
+        message="Are you sure you want to unblock these dates? This will allow users to book during this period."
+        confirmText="Unblock dates"
+        cancelText="Cancel"
+        isDestructive={false}
+      />
     </div>
   );
 }

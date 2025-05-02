@@ -85,7 +85,7 @@ export default function Home() {
               endDate={selectedEndDate}
               onBookingComplete={handleCalendarRefresh}
             />
-            <BookingList key={refreshKey} />
+            <BookingList key={refreshKey} onBookingChange={handleCalendarRefresh} />
             <BlockDatesForm onBlockComplete={handleCalendarRefresh} />
           </div>
         </div>

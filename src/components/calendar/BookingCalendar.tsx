@@ -121,7 +121,12 @@ export function BookingCalendar({ onSelectDate, selectedStartDate, selectedEndDa
     return null;
   };
 
-  const handleClickDay = (date: Date) => {
+  const handleClickDay = (value: unknown) => {
+    // Handle null, array, or range values
+    if (!value || Array.isArray(value)) return;
+    
+    // Extract date from value
+    const date = value instanceof Date ? value : new Date(value as string);
     const isAdminBlocked = isDateBlocked(date);
     
     // Don't allow selecting admin-blocked dates

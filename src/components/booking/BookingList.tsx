@@ -14,11 +14,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Booking } from "@/types";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
+import { ConfirmModal } from "../ui/ConfirmModal";
 
-export function BookingList() {
+interface BookingListProps {
+  onBookingChange?: () => void;
+}
+
+export function BookingList({ onBookingChange }: BookingListProps) {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [bookingToCancel, setBookingToCancel] = useState<string | null>(null);
 
   const fetchUserBookings = useCallback(async () => {
     if (!user) return;
@@ -51,16 +58,25 @@ export function BookingList() {
     }
   }, [user]);
 
-  const handleCancelBooking = async (bookingId: string) => {
-    if (!confirm("Are you sure you want to cancel this booking?")) return;
+  const handleCancelClick = (bookingId: string) => {
+    setBookingToCancel(bookingId);
+    setCancelModalOpen(true);
+  };
+
+  const handleCancelBooking = async () => {
+    if (!bookingToCancel) return;
 
     try {
-      await deleteDoc(doc(db, "bookings", bookingId));
+      await deleteDoc(doc(db, "bookings", bookingToCancel));
       toast.success("Booking cancelled successfully");
       fetchUserBookings();
+      onBookingChange?.(); // Trigger calendar refresh
     } catch (error) {
       console.error("Error cancelling booking:", error);
       toast.error("Failed to cancel booking");
+    } finally {
+      setCancelModalOpen(false);
+      setBookingToCancel(null);
     }
   };
 
@@ -111,7 +127,7 @@ export function BookingList() {
                   )}
                 </div>
                 <button
-                  onClick={() => handleCancelBooking(booking.id)}
+                  onClick={() => handleCancelClick(booking.id)}
                   className="text-gray-700 hover:text-gray-900 text-sm font-medium underline"
                 >
                   Cancel
@@ -121,6 +137,17 @@ export function BookingList() {
           ))}
         </div>
       )}
+      
+      <ConfirmModal
+        isOpen={cancelModalOpen}
+        onClose={() => setCancelModalOpen(false)}
+        onConfirm={handleCancelBooking}
+        title="Cancel booking"
+        message="Are you sure you want to cancel this booking? This action cannot be undone."
+        confirmText="Cancel booking"
+        cancelText="Keep booking"
+        isDestructive={true}
+      />
     </div>
   );
 }
