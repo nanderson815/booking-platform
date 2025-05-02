@@ -70,21 +70,33 @@ export default function Home() {
 
       <main className="container mx-auto px-4 py-6 sm:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-          <div className="lg:col-span-2 order-2 lg:order-1 space-y-6 sm:space-y-8">
+          {/* On mobile, calendar appears first */}
+          <div className="lg:col-span-2 space-y-6 sm:space-y-8">
             <BookingCalendar
               key={refreshKey}
               onSelectDate={handleSelectDate}
               selectedStartDate={selectedStartDate}
               selectedEndDate={selectedEndDate}
             />
+            {/* Booking form appears right below calendar on mobile */}
+            <div className="lg:hidden">
+              <BookingForm
+                startDate={selectedStartDate}
+                endDate={selectedEndDate}
+                onBookingComplete={handleCalendarRefresh}
+              />
+            </div>
             <HouseInfo />
           </div>
-          <div className="space-y-6 sm:space-y-8 order-1 lg:order-2">
-            <BookingForm
-              startDate={selectedStartDate}
-              endDate={selectedEndDate}
-              onBookingComplete={handleCalendarRefresh}
-            />
+          <div className="space-y-6 sm:space-y-8">
+            {/* Hide booking form on mobile since it's shown above */}
+            <div className="hidden lg:block">
+              <BookingForm
+                startDate={selectedStartDate}
+                endDate={selectedEndDate}
+                onBookingComplete={handleCalendarRefresh}
+              />
+            </div>
             <BookingList key={refreshKey} onBookingChange={handleCalendarRefresh} />
             <BlockDatesForm onBlockComplete={handleCalendarRefresh} />
           </div>
